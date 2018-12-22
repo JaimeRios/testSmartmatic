@@ -3,20 +3,43 @@
 
 #include <iostream>
 #include <string.h>
+#include <thread>
+#include <mutex>
+#include <fstream>
+#include "Save.h"
 
 using namespace std;
 
 class SortAlgorithms{
 
 private:
-	char  *inputFile;
- 	char *outputFile;
+	char *inputFileName;
+ 	char *outputFileName;
 	char *algorithmSelected; 
 	int numberThreads;
+	Save mySave;
+	std::mutex mtxReader;
+	ifstream myInputFile;
 	
 public:
-	SortAlgorithms(char *_inputFile, char *_outputFile, char *_algorithmSelected, int _numberThreads);
-	void runAlgorithm();
+	//Constructor and destructor
+	SortAlgorithms(char *_inputFileName, char *_outputFileName, char *_algorithmSelected, int _numberThreads);
+	~SortAlgorithms();
+	
+	//checking if user write the aavalible algorithms right
+	//return true if user write quicksort or merge as 4th argument in console
+	// false in other case
+	bool rightAlgorithmSelected();
+
+	//Function that consumes line from inputFile
+	/*
+	 * IsData is a boolean that will tell me if there are data from the inputFile to process
+	*/
+	string readLine(bool &isData);
+
+	//main process, start preparing the vector
+	//sort depends of the sort method selected, and then print process using a object of Save class
+	void sorting(string line);
 	
 	//merge and mergeSort are method for the merge sort Algorithm
 	//merge is a 

@@ -3,99 +3,93 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 
-SortAlgorithms::SortAlgorithms(char *_inputFile, char *_outputFile, char *_algorithmSelected, int _numberThreads){
+SortAlgorithms::SortAlgorithms(char *_inputFileName, char *_outputFileName, char *_algorithmSelected, int _numberThreads):mySave(_outputFileName){
 	
-	inputFile = _inputFile;
- 	outputFile = _outputFile; 
+	inputFileName = _inputFileName;
+ 	outputFileName = _outputFileName; 
 	algorithmSelected = _algorithmSelected; 
 	numberThreads = _numberThreads;
-	
+	//Open inputFile
+	myInputFile.open(inputFileName);
 }
 
-void SortAlgorithms::runAlgorithm(){
+SortAlgorithms::~SortAlgorithms(){
+	//Close inputFile
+	myInputFile.close();
+}
 
-	bool write=true;
-	//inputFile
-	ifstream file(inputFile);	
-	
-	//outputFile
-	ofstream myFile;
-	myFile.open(outputFile);	
-
-	string line;
-	//For read the lines in the file
-	while(getline(file,line)){
-		//split and convert to integer
-		vector<int> numbers;
+bool SortAlgorithms::rightAlgorithmSelected(){
+	if(strcmp(algorithmSelected, "merge")==0){
+		return true;
 		
-		stringstream iss(line);
-		while(1){
-			if(!iss)
-				break;
-			int s;
-			iss >> s;
-			numbers.push_back(s);
-					
-		}
-		//the last number of array appear repeat so a temporary solution was erase the last element
-		numbers.pop_back();
+	}else if(strcmp(algorithmSelected, "quicksort")==0 ){
+		return true;
 		
-		int size = numbers.size();
- 
-		//convert to a int vector
-		int values[size];
-		for(int i=0;i<size;i++){
-			values[i]=numbers.at(i);		
-		}
-
-		
-
-		if(strcmp(algorithmSelected, "merge")==0){
-			//cout<<" You choose merge!"<<endl;
-			this->mergeSort(values,0,size-1);
-
-		//}else if(strcmp(algorithmSelected, "insertion")==0){
-			//cout<<" You choose insertion!"<<endl;
-			//this->insertion(values,size);
-
-		//}else if(strcmp(algorithmSelected, "bubble")==0){
-			//cout<<" You choose bubble!"<<endl;
-			//this->bubble(values,size);
-
-		}else if(strcmp(algorithmSelected, "quicksort")==0 ){
-			//cout<<" You choose quicksort!"<<endl;
-			this->quickSort(values,0,size-1);
-
-		//}else if(strcmp(algorithmSelected, "heapsort")==0 ){
-			//cout<<" You choose heapsort!"<<endl;
-			//this->heapSort(values,size);
-		
-		}else{
-			cout<<"Invalid name for sort algorithm option "<<endl;
-			write = false;
-		}
-		
-		/*code for testing
-		for(int i=0;i<size;i++){
-			cout<<values[i]<<endl;		
-		}*/
-		
-		if(write){
+	}else{
+		cout<<" the last argument must be quicksort or mergesort"<<endl;
+		return false;
 			
-			for(int i=0;i<size;i++){
-				myFile<< values[i];
-				if(i<size-1)
-					myFile<<",";
-				if(i==size-1)
-					myFile<<"\n";		
-			}		
-		}
+	}
+}
 
+string SortAlgorithms::readLine(bool &isData){
+	//to avoid racing condition on reading data from inputFile
+	std::lock_guard<std::mutex> guard(mtxReader);
+	string line="";
+	if(getline(this->myInputFile,line)){
+		isData=true;
+		
+	}else{
+		isData=false;	
+	}
+	return line;
+}
+
+void SortAlgorithms::sorting(string line){
+	//split and convert to integer
+	vector<int> numbers;
+	bool isRightAlgorithm=true;
+	
+	for(int i=0;i<line.length();i++){
+		
+		//wait for a second if you found character space			
+		if(line[i]==' '){
+			usleep(1000000);			
+		}else{
+			numbers.push_back(line[i]-'0');
+		}		
 	}
 	
-}
+	int size = numbers.size();
 
+	//convert to a int vector
+	int values[size];
+	for(int i=0;i<size;i++){
+		values[i]=numbers.at(i);
+		
+	}
+	
+	//sorting process
+	if(strcmp(algorithmSelected, "merge")==0){
+
+		this->mergeSort(values,0,size-1);
+
+	}else if(strcmp(algorithmSelected, "quicksort")==0 ){
+
+		this->quickSort(values,0,size-1);
+		
+	}else{
+			isRightAlgorithm=false;
+			cout<<" the last argument must be quicksort or mergesort"<<endl;
+	}
+
+	//store data on outputFile only if choose the any avalible sort algorithm
+	if(isRightAlgorithm)
+		mySave.savingControl(values,size);
+	//this->writeLine(values,size);
+}
 
 void SortAlgorithms::merge(int *a,int low, int high, int mid){
 
@@ -278,6 +272,3 @@ void SortAlgorithms::heapify(int *vector, int n, int i){
         this->heapify(vector, n, largest); 
     } 
 }
-
-
-

@@ -17,4 +17,6 @@ to compile you must:
 5. write ./producerConsumer /path/to/InputFile /path/to/OutputFile algorithmToSort 
 6. in algorithmToSort you must write quicksort or heapsort if you dont the programm tell it to you
 
-I left the part of thread because my experience in mutithread as I say to Erika when she ask me to fill list of items that I know. But I  I'm want to let you know that always want to learn more and improve myself.
+update:
+correct division of the each character on the vector. 
+Made the threads and working perfectly.
